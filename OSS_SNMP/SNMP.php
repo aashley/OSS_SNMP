@@ -35,16 +35,6 @@
 
 namespace OSS_SNMP;
 
-// Add a trivial auto-loader
-spl_autoload_register( function( $class ) {
-    if( substr( $class, 0, 9 ) == 'OSS_SNMP\\' )
-    {
-        $class = str_replace( '\\', '/', $class );
-        require( dirname( __FILE__ ) . '/../' . $class . '.php' );
-    }
-});
-
-
 /**
  * A class for performing SNMP V2 queries and processing the results.
  *

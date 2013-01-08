@@ -1,0 +1,13 @@
+{
+    "name": "opensolutions/oss-snmp",
+    "description": "PHP SNMP Library for People Who HATE SNMP, MIBs and OIDs!",
+    "require": {
+        "php": ">=5.4.0",
+        "ext-snmp": "*"
+    },
+    "autoload": {
+        "psr-0": {
+            "OSS_SNMP": ""
+        }
+    }
+}
