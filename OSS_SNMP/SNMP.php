@@ -164,7 +164,7 @@ class SNMP
      */
     public function get( $oid )
     {
-        if( $this->cache() && ( $rtn = $this->getCache()->load( $oid ) ) !== null )
+        if( $this->cache() && ( $rtn = $this->getCache()->load( $this->cacheKey( $oid ) ) ) !== null )
             return $rtn;
 
         $this->_lastResult = @snmp2_get( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
@@ -172,7 +172,7 @@ class SNMP
         if( $this->_lastResult === false )
             throw new Exception( 'Cound not perform walk for OID ' . $oid );
 
-        return $this->getCache()->save( $oid, $this->parseSnmpValue( $this->_lastResult ) );
+        return $this->getCache()->save( $this->cacheKey( $oid ), $this->parseSnmpValue( $this->_lastResult ) );
     }
 
     /**
@@ -203,7 +203,7 @@ class SNMP
      */
     public function walk1d( $oid )
     {
-        if( $this->cache() && ( $rtn = $this->getCache()->load( $oid ) ) !== null )
+        if( $this->cache() && ( $rtn = $this->getCache()->load( $this->cacheKey( $oid ) ) ) !== null )
             return $rtn;
 
         $this->_lastResult = @snmp2_real_walk( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
@@ -224,7 +224,7 @@ class SNMP
             $result[ substr( $_oid, strrpos( $_oid, '.' ) + 1 ) ] = $this->parseSnmpValue( $value );
         }
 
-        return $this->getCache()->save( $oid, $result );
+        return $this->getCache()->save( $this->cacheKey( $oid ), $result );
     }
 
     /**
@@ -252,7 +252,7 @@ class SNMP
      */
     public function subOidWalk( $oid, $position )
     {
-        if( $this->cache() && ( $rtn = $this->getCache()->load( $oid ) ) !== null )
+        if( $this->cache() && ( $rtn = $this->getCache()->load( $this->cacheKey( $oid ) ) ) !== null )
             return $rtn;
 
         $this->_lastResult = @snmp2_real_walk( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
@@ -269,7 +269,7 @@ class SNMP
             $result[ $oids[ $position] ] = $this->parseSnmpValue( $value );
         }
 
-        return $this->getCache()->save( $oid, $result );
+        return $this->getCache()->save( $this->cacheKey( $oid ), $result );
     }
 
 
@@ -296,7 +296,7 @@ class SNMP
      */
     public function walkIPv4( $oid )
     {
-        if( $this->cache() && ( $rtn = $this->getCache()->load( $oid ) ) !== null )
+        if( $this->cache() && ( $rtn = $this->getCache()->load( $this->cacheKey( $oid ) ) ) !== null )
             return $rtn;
 
         $this->_lastResult = @snmp2_real_walk( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
@@ -315,7 +315,7 @@ class SNMP
             $result[ $oids[ $len - 4 ] . '.' . $oids[ $len - 3 ] . '.' . $oids[ $len - 2 ] . '.' . $oids[ $len - 1 ]  ] = $this->parseSnmpValue( $value );
         }
 
-        return $this->getCache()->save( $oid, $result );
+        return $this->getCache()->save( $this->cacheKey( $oid ), $result );
     }
 
 
@@ -343,7 +343,7 @@ class SNMP
      */
     public function walkMacAddress( $oid )
     {
-        if( $this->cache() && ( $rtn = $this->getCache()->load( $oid ) ) !== null )
+        if( $this->cache() && ( $rtn = $this->getCache()->load( $this->cacheKey( $oid ) ) ) !== null )
             return $rtn;
 
         $this->_lastResult = @snmp2_real_walk( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
@@ -370,7 +370,7 @@ class SNMP
             $result[$macAddress] = $this->parseSnmpValue( $value );
         }
 
-        return $this->getCache()->save( $oid, $result );
+        return $this->getCache()->save( $this->cacheKey( $oid ), $result );
     }
 
 
@@ -717,6 +717,21 @@ class SNMP
         return $m;
     }
 
+    /**
+     * Create a cache key for a given OID
+     *
+     * This function returns a cache key to use based on the supplied OID.
+     * It includes the hostname and community so that the cache can be used
+     * against multiple systems/communities in a single run.
+     *
+     * @param string $oid
+     * @return string
+     */
+    protected function cacheKey( $oids )
+    {
+        $rtn = $this->getHost() . '-' . $this->getCommunity() . '-' . $oids;
+        return $rtn;
+    }
 }
 
 
