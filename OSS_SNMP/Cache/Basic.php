@@ -55,14 +55,10 @@ class Basic extends \OSS_SNMP\Cache
      * Cache constructor.
      *
      * For basic cache, takes no parameters.
-     *
-     * @return \OSS_SNMP\Cache\Basic An instance of the cache ($this) for  fluent interfaces
      */
     public function __construct()
     {
-        $_cache = array();
-
-        return $this;
+        $this->_cache = array();
     }
 
 
