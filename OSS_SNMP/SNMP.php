@@ -349,7 +349,7 @@ class SNMP
         $this->_lastResult = @snmp2_real_walk( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
 
         if( $this->_lastResult === false )
-            throw new Excpetion( 'Could not perform walk for OID ' . $oid );
+            throw new Exception( 'Could not perform walk for OID ' . $oid );
 
         $result = array();
 
