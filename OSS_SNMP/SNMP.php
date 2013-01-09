@@ -279,7 +279,7 @@ class SNMP
      *
      * I.e. the following query with sample results:
      *
-     * subOidWalk( '.1.3.6.1.2.1.15.3.1.1. )
+     * walkIPv4( '.1.3.6.1.2.1.15.3.1.1' )
      *
      *
      *       .1.3.6.1.2.1.15.3.1.1.10.20.30.4 = IpAddress: 192.168.10.10
@@ -313,6 +313,61 @@ class SNMP
             $len = count( $oids );
 
             $result[ $oids[ $len - 4 ] . '.' . $oids[ $len - 3 ] . '.' . $oids[ $len - 2 ] . '.' . $oids[ $len - 1 ]  ] = $this->parseSnmpValue( $value );
+        }
+
+        return $this->getCache()->save( $oid, $result );
+    }
+
+
+
+    /**
+     * Get indexed SNMP values where they are indexed by MAC addresses
+     *
+     * I.e. the following query with sample results:
+     *
+     * walkMacAddress( '.1.3.6.1.2.1.17.4.3.1' )
+     *
+     *      .1.3.6.1.2.1.17.4.3.1.1.0.2.155.75.239.216 = Hex-STRING: 00 02 9B 4B EF D8
+     *      ...
+     *
+     * would yiled an array:
+     *
+     *      [
+     *          '00:02:9B:4B:EF:D8' => "Hex-STRING: 00 02 9B 4B EF D8"
+     *          ...
+     *      ]
+     *
+     * @throws \OSS_SNMP\Exception On *any* SNMP error, warnings are supressed and a generic exception throw.
+     * @param string $oid The OID to walk
+     * @return array The resultant values
+     */
+    public function walkMacAddress( $oid )
+    {
+        if( $this->cache() && ( $rtn = $this->getCache()->load( $oid ) ) !== null )
+            return $rtn;
+
+        $this->_lastResult = @snmp2_real_walk( $this->getHost(), $this->getCommunity(), $oid, $this->getTimeout(), $this->getRetry() );
+
+        if( $this->_lastResult === false )
+            throw new Excpetion( 'Could not perform walk for OID ' . $oid );
+
+        $result = array();
+
+        foreach( $this->_lastResult as $_oid => $value )
+        {
+            $oids = explode( '.', $_oid );
+
+            $len = count( $oids );
+
+            $macAddress = '';
+            for( $i = 6; $i > 0; $i-- )
+            {
+                $macAddress .= sprintf( '%02X', $oids[ $len - $i ] );
+                if( $i != 1 )
+                    $macAddress .= ":";
+            }
+
+            $result[$macAddress] = $this->parseSnmpValue( $value );
         }
 
         return $this->getCache()->save( $oid, $result );
