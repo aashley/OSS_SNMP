@@ -44,6 +44,8 @@ namespace OSS_SNMP\MIBS;
 class Iface extends \OSS_SNMP\MIB
 {
     const OID_IF_NUMBER                  = '.1.3.6.1.2.1.2.1.0';
+    
+    const OID_IF_INDEX                   = '.1.3.6.1.2.1.2.2.1.1';
     const OID_IF_DESCRIPTION             = '.1.3.6.1.2.1.2.2.1.2';
     const OID_IF_TYPE                    = '.1.3.6.1.2.1.2.2.1.3';
     const OID_IF_MTU                     = '.1.3.6.1.2.1.2.2.1.4';
@@ -68,8 +70,9 @@ class Iface extends \OSS_SNMP\MIB
     const OID_IF_OUT_QUEUE_LENGTH        = '.1.3.6.1.2.1.2.2.1.21';
 
     const OID_IF_NAME                    = '.1.3.6.1.2.1.31.1.1.1.1';
+    const OID_IF_HIGH_SPEED              = '.1.3.6.1.2.1.31.1.1.1.15';
     const OID_IF_ALIAS                   = '.1.3.6.1.2.1.31.1.1.1.18';
-
+    
     /**
      * Get the number of network interfaces (regardless of
      * their current state) present on this system.
@@ -105,7 +108,14 @@ class Iface extends \OSS_SNMP\MIB
      */
     public function physAddresses()
     {
-        return $this->getSNMP()->walk1d( self::OID_IF_PHYS_ADDRESS );
+        $pa = $this->getSNMP()->walk1d( self::OID_IF_PHYS_ADDRESS );
+        
+        // some switches return leading '00:' as '0:' - we correct this here:
+        foreach( $pa as $i => $a )
+            if( strpos( $a, ':' ) == 1 )
+                $pa[ $i ] = '0' . $a;
+        
+        return $pa;
     }
 
 
@@ -179,11 +189,23 @@ class Iface extends \OSS_SNMP\MIB
      * value."
      *
      * @see \OSS_SNMP\MIBS\System::uptime()
+     * @param bool $asUnixTimestamp Poll sysUpTime and use this to return a timestamp of the last change
      * @return array Timeticks (or zero) since last change of the interfaces
      */
-    public function lastChanges()
+    public function lastChanges( $asUnixTimestamp = false )
     {
-        return $this->getSNMP()->walk1d( self::OID_IF_LAST_CHANGE );
+        $lc = $this->getSNMP()->walk1d( self::OID_IF_LAST_CHANGE );
+        
+        if( $asUnixTimestamp )
+        {
+            $sysUptime = $this->getSNMP()->useSystem()->uptime() / 100;
+            
+            foreach( $lc as $i => $t )
+                if( $t )
+                    $lc[$i] = intval( floor( time() - $sysUptime + ( $t / 100 ) ) );
+        }
+        
+        return $lc;
     }
 
     /**
@@ -367,6 +389,25 @@ class Iface extends \OSS_SNMP\MIB
     }
 
     /**
+     * Get an array of device interface indexes
+     *
+     * E.g. the following SNMP output yields the shown array:
+     *
+     * .1.3.6.1.2.1.2.2.1.1 = INTEGER: 1
+     * .1.3.6.1.2.1.2.2.1.2 = INTEGER: 2
+     * ...
+     *
+     *      [1] => 1
+     *      [2] => 2
+     *
+     * @return array An array of interface indexes
+     */
+    public function indexes()
+    {
+        return $this->getSNMP()->walk1d( self::OID_IF_INDEX );
+    }
+
+    /**
      * Get an array of device interface names
      *
      * E.g. the following SNMP output yields the shown array:
@@ -437,6 +478,14 @@ class Iface extends \OSS_SNMP\MIB
      *
      * NB: operating speed as opposed to maximum speed
      *
+     * **WARNING:** This is a 32 bit int so it cannot represent 10Gb
+     * links. These would show up as:
+     *
+     *      [10127] => 4294967295
+     *
+     * Instead, use highSpeeds() which will represent the speed as Mbps
+     *
+     * @see highSpeeds()
      * @return array An array of interface operating speeds
      */
     public function speeds()
@@ -444,7 +493,40 @@ class Iface extends \OSS_SNMP\MIB
         return $this->getSNMP()->walk1d( self::OID_IF_SPEED );
     }
 
-
+    /**
+     * Get an array of device interface (operating) speeds
+     *
+     * From Cisco:
+     *
+     * > "An estimate of the interface's current bandwidth in units
+     * > of 1,000,000 bits per second. If this object reports a
+     * > value of `n' then the speed of the interface is somewhere in
+     * > the range of `n-500,000' to `n+499,999'. For interfaces
+     * > which do not vary in bandwidth or for those where no
+     * > accurate estimation can be made, this object should contain
+     * > the nominal bandwidth. For a sub-layer which has no concept
+     * > of bandwidth, this object should be zero."
+     *
+     * E.g. the following SNMP output yields the shown array:
+     *
+     * .1.3.6.1.2.1.2.2.1.5.10127 = Gauge32: 10000
+     * .1.3.6.1.2.1.2.2.1.5.10128 = Gauge32: 1000
+     * .1.3.6.1.2.1.2.2.1.5.10129 = Gauge32: 100
+     * ...
+     *
+     *      [10127] => 10000000000
+     *      [10128] => 1000000000
+     *      [10129] => 100000000
+     *
+     * @return array An array of interface operating speeds
+     */
+    public function highSpeeds()
+    {
+        return $this->getSNMP()->walk1d( self::OID_IF_HIGH_SPEED );
+    }
+    
+    
+    
     /**
      * Constant for possible value of interface operation status.
      * @see operationStates()

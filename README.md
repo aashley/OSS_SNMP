@@ -6,7 +6,7 @@ A PHP SNMP Library for People Who HATE SNMP, MIBs and OIDs!
 
 I ([Barry O'Donovan](http://www.barryodonovan.com/)) hate SNMP! But I have
 to use it on a daily basis with my company, [Open
-Solutions](http://www.opensolutions.ie/).
+Solutions](http://www.opensolutions.ie/) and our customers.
 
 Don't get me wrong, it's an essential tool in the trade of network engineering
 but it's also a serious PITA. Finding MIBs, OIBs, making them work, translating
@@ -15,10 +15,9 @@ you need, you'll have forgotten it months later when you need it again.
 
 Anyway, while trying to create some automatic L2 topology graphing tools
 (via Cisco/Foundry Discovery Protocol for example) and also some per VLAN
-RSTP tools to show port states, I started writing this library. As I wrote, I
-realised it was actually very useful and present it here now in the hopes
-that the wider network engineering community will find it useful and also
-contribute back *MIBs*.
+RSTP tools to show port states, I started writing this library which has turned
+out to be very useful. It is presented here in the hope that the wider network 
+engineering community will find it useful and also contribute back *MIBs*.
 
 
 Documentation
@@ -63,26 +62,32 @@ This software library is released under the *New BSD License* (also known as the
 for the full text.
 
 
-The Bad News... with some Good News
-------------------------------------
+MIBS - The Bad News... with some Good News
+------------------------------------------
 
-The, what I'm calling, *MIBs* are defined in `OSS_SNMP/MIBS` and these define the functionality as per the examples above.
+The, what I'm calling, *MIBs* are defined in `OSS_SNMP/MIBS` and these define the 
+functionality as per the examples above.
 
-There's only a handful of MIBs currently defined - essentially what I've needed so far for other projects.
+There's only a handful of MIBs currently defined - essentially what I've needed so
+far for other projects.
 
 But it's **really easy** to add your own. And **please** send me a pull request for those.
 
-For the MIBs I've written, only `Iface` (`MIBS/Iface.php`) is fully complete and I
-just completed it as an exercise to help future contributors. But there's some *really* useful
+For the MIBs I've written, `Iface` (`MIBS/Iface.php`) is fully complete as an example 
+to help future contributors. But there's some *really* useful
 functionality in the others. For example the Cisco/CDP MIB can discover your entire L2 network
 topology recursively. Another project we've released, [NOCtools](https://github.com/opensolutions/NOCtools/wiki), 
 give concreate examples of this with GraphViz.
 
-PHP 5.4 is a requirement. Yeah, I know. Not even the current Ubuntu ships this. But
-look, 5.4 is released, it's stable, it's available on FreeBSD and
-[from personal ports for Ubuntu](http://www.barryodonovan.com/index.php/2012/05/22/ubuntu-12-04-precise-pangolin-and-php-5-4-again).
+Right now it's SNMP v2. This can be easily updated for multiple version support. Also, it's read only
+as, at time of writing, I have no current requirement to set SNMP values via PHP.
 
-The reason for 5.4, among other things, is that we can now dereference an array directly from a function call:
+
+Requirements
+------------
+
+PHP 5.4 is a requirement. The reason for 5.4 (besides the fact it's long been regarded as stable), 
+is that we can now dereference an array directly from a function call:
 
     $name = $ciscosw->useCisco_VTP()->vlanNames()[ $vlanid ];
 
@@ -93,8 +98,7 @@ rather than the old way:
 
 And as most of the defined MIBs *walk* a given tree, almost all defined functions return an array.
 
-Right now it's SNMP v2. This can be easily updated for multiple version support. Also, it's read only
-as, at time of writing, I have no requirement to set SNMP values.
+The only other requirement is the php5-snmp library.
 
 
 Code / phpDoc Documentation

@@ -139,23 +139,26 @@ class RSTP extends \OSS_SNMP\MIBS\Cisco
      * @param boolean $translate If true, return the string representation via self::$STP_X_RSTP_PORT_ROLES
      * @return array The device's RSTP port roles (by given vlan id)
      */
-    public function rstpPortRole( $vid, $translate = false )
+    public function portRoles( $vid, $translate = false )
     {
         $roles = $this->getSNMP()->walk1d( self::OID_STP_X_RSTP_PORT_ROLE . ".{$vid}" );
 
         // convert STP port IDs to switch port IDs
         $croles = array();
+        $basePortIfIndexes = $this->getSNMP()->useBridge()->basePortIfIndexes();
+        $relPosToAliases   = $this->getSNMP()->useEntity()->relPosToAlias();
         foreach( $roles as $k => $v )
         {
-            $base = $this->getSNMP()->useBridge()->basePortIfIndexes()[$k];
-            if( $base )
-                $croles[ $base ] = $v;
-            else
+            if( isset( $basePortIfIndexes[ $k ] ) )
+                $croles[ $basePortIfIndexes[ $k ] ] = $v;
+            else if( isset( $relPosToAliases[ $k ] ) )
             {
                 // and and get port ID from MIBS\Entity
                 // TODO Find a better way to translate these?
-                $croles[ $this->getSNMP()->useEntity()->relPosToAlias()[$k] ] = $v;
+                $croles[ $relPosToAliases[ $k ] ] = $v;
             }
+            else
+                $croles[ 'UNKNOWN-' . $k ] = $v;
         }
 
         if( !$translate )
