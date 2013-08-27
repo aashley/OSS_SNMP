@@ -48,6 +48,7 @@ class VTP extends \OSS_SNMP\MIBS\Cisco
     const OID_VTP_VLAN_STATUS          = '.1.3.6.1.4.1.9.9.46.1.3.1.1.2.1';
     const OID_VTP_VLAN_TYPE            = '.1.3.6.1.4.1.9.9.46.1.3.1.1.3.1';
     const OID_VTP_VLAN_NAME            = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4.1';
+    const OID_VTP_VLAN_TRUNK_PORT_DYNAMIC_STATUS = '.1.3.6.1.4.1.9.9.46.1.6.1.1.14';
 
 
     const OID_STP_X_RSTP_PORT_ROLE     = '.1.3.6.1.4.1.9.9.82.1.12.2.1.3'; // add '.$VID'; integer
@@ -109,8 +110,47 @@ class VTP extends \OSS_SNMP\MIBS\Cisco
         return $this->getSNMP()->translate( $states, self::$VTP_VLAN_STATES );
     }
 
+    /**
+     * Constant for possible value of VTP VLAN Trunk dynamic status.
+     * @see vlanTrunkDynamicStatus()
+     */
+    const VTP_VLAN_TRUNK_TRUNKING = 1;
 
+    /**
+     * Constant for possible value of VTP VLAN Trunk dynamic status.
+     * @see vlanTrunkDynamicStatus()
+     */
+    const VTP_VLAN_TRUNK_NOT_TRUNKING = 2;
 
+    /**
+     * Text representation of VTP VLAN Trunk dynamic status.
+     *
+     * @see vlanTrunkDynamicStatus()
+     * @var array Text representations of VTP VLAN Trunk dynamic status.
+     */
+    public static $VTP_VLAN_TRUNK_STATES = array(
+        self::VTP_VLAN_TRUNK_TRUNKING            => 'trunking',
+        self::VTP_VLAN_TRUNK_NOT_TRUNKING        => 'notTrunking',
+    );
+
+    /**
+     * Get the device's trunk port dynamic statys.
+     *
+     * @see $VTP_VLAN_STATES
+     * @see VTP_VLAN_STATE_OPERATIONAL and others
+     *
+     * @param boolean $translate If true, return the string representation via self::$VTP_VLAN_TYPES
+     * @return array The device's VTP VLAN States (indexed by VLAN ID)
+     */
+    public function vlanTrunkDynamicStatus( $translate = false )
+    {
+        $states = $this->getSNMP()->walk1d( self::OID_VTP_VLAN_TRUNK_PORT_DYNAMIC_STATUS );
+
+        if( !$translate )
+            return $states;
+
+        return $this->getSNMP()->translate( $states, self::$VTP_VLAN_TRUNK_STATES );
+    }
 
     /**
      * Constant for possible value of VTP VLAN type.
